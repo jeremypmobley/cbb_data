@@ -10,5 +10,3 @@ Based on data from the kaggle competition
 https://www.kaggle.com/c/march-machine-learning-mania-2016
 
 #### For more info check out the [Wiki](https://github.com/jeremypmobley/cbb_data/wiki)
-
-
