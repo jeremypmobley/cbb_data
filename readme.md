@@ -2,7 +2,7 @@
 
 Author: Jeremy Mobley
 
-### Objective: Predict likelihood of NCAA men's college basketball games
+### Objective: Predict outcome of NCAA men's college basketball games
 
 Evaluation Metric: Log Loss
 
