@@ -21,7 +21,7 @@ getDoParWorkers()
 
 
 #LOAD DATA
-setwd("~/Desktop/kaggle/march_madness_2016")  # at work
+setwd("~/Desktop/kaggle/march_madness_2016")
 #train <- read.csv("train.csv")
 load("train_environment.Rdata")
 

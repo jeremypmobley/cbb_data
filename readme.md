@@ -2,8 +2,16 @@
 
 Author: Jeremy Mobley
 
-### Go here to download the data from kaggle
+### Objective: Predict likelihood of NCAA men's college basketball games
 
+#### Evaluation Metric
+Average Log Loss
+
+#### Data
+
+Download the data from kaggle:  
 https://www.kaggle.com/c/march-machine-learning-mania-2016/data
 
 #### More to come soon...
+
+

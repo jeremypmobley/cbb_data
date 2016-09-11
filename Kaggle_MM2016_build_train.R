@@ -12,7 +12,7 @@
 #################################################################################
 ### LOAD DATA
 #################################################################################
-setwd("~/Desktop/kaggle/march_madness_2016")  # at work
+setwd("~/Desktop/kaggle/march_madness_2016")
 
 #tourney_slots <- read.csv("TourneySlots.csv")
 tourney_seeds <- read.csv("TourneySeeds.csv")
