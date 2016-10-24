@@ -1,6 +1,10 @@
 
+# Script to scrape the past three years leaderboard results from the March Madness Kaggle competitions
+#   - write them out to a csv for later use
 
-# scrape kaggle leaderboards
+# Author: Jeremy Mobley
+# 2016
+
 
 library(XML)
 library(RCurl)
@@ -32,5 +36,3 @@ for (i in 1:nrow(webpages)){
 
 # write out kaggle results as csv file to data in github repo
 write.csv(kaggle_results_df, "~/Github/cbb_data/data/kaggle_results_df.csv")
-
-

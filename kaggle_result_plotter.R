@@ -1,65 +1,51 @@
 
 
-# Script to scrape Kaggle leaderboard and plot distribution of leaderboard
+# Script to plot distribution of leaderboard
 
 
-library(XML)
-library(RCurl)
-
-
-# set webpage to scrape
-webpage <- "https://www.kaggle.com/c/march-machine-learning-mania-2016/leaderboard"
-
-# read in HTML tables from webpage
-pagedata <- getURL(webpage)
-tables <- readHTMLTable(pagedata, header = FALSE)
-
-
-# create dataframe of score values
-leaderboard_df <- data.frame(score=tables$"leaderboard-table"$V4[2:nrow(tables$"leaderboard-table")])
-
-
-myrow <- tables$"leaderboard-table"[tables$"leaderboard-table"$V3=='jeremypmobley',]
-myscore <- as.numeric(as.character(myrow$V4))
-
-# what place am I currently?
-myplace <- as.numeric(as.character(myrow$V1))
-myplace
-
-# how many competitors are there?
-num_competitors <- length(allscores_list)
-num_competitors
-
-# what percentile of competitors am I in?
-my_pctile <- myplace/num_competitors
-my_pctile
-
-# how far behind am I behind leader?
-abs((allscores_list[1] - myscore)/allscores_list[1])
-
-# how far behind am I behind top-10?
-abs((allscores_list[10] - myscore)/allscores_list[10])
-
-
-# only plot top X% of entries
-#pct_to_plot <- round(my_pctile,1) + 0.1
-pct_to_plot <- 0.50
-plot(allscores_list[1:round(pct_to_plot*num_competitors)])
-abline(v=myplace, col='red')
+# read in the data from csv saved in data folder
+kaggle_results_df <- read.csv("~/Github/cbb_data/data/kaggle_results_df.csv")
 
 
 
-# Points projection (on day of competition close, no time decay)
-# assumes no teammates
+### PLOT THE RESULTS ###
+
+# only plot top 100 scores
+top_num_to_plot <- 100
+#plot(kaggle_results_df$score[1:top_num_to_plot])
+
+years <- c(2014, 2015, 2016)
+
+# plot all three years
+par(mfrow=c(1,3)) 
+for (year in years){
+  leaderboard_df <- kaggle_results_df[kaggle_results_df$year == year,]
+  plot(leaderboard_df$score[1:top_num_to_plot], 
+       ylab = "logloss", 
+       xlab = "", 
+       ylim = c(0.4,0.6), main = year
+      
+       )
+}
+
+
+
+# save plot out as png file
+#png(filename = "kaggle_top_100_logloss.png", width = 1080, height = 480, units = "px")
+#pdf(file = "kaggle_top_100_logloss.pdf")
+#dev.off()
+
+
+
+
+
+
+
+"""
+# Kaggle points projection (on day of competition close, no time decay)
 num_teammates <- 1
 100000 / sqrt(num_teammates) * myplace^(-0.75) * log(1 + log(num_competitors)) * exp(-1/500)
-
-
-
-
-
-# Bring in end date from scrape
-
+"""
 
 
 
