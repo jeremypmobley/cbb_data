@@ -212,3 +212,30 @@ legend("bottomleft", legend = c("model", "seed_benchmark", "kaggle_avg_top10", "
 
 
 
+
+
+
+
+
+
+
+
+
+
+##### kNN modeling ####
+
+library(FNN)
+knnmodel <- knn(train = train[2:nrow(train),c("high_id_win_pct", "low_id_win_pct")], 
+                cl = train$outcome[2:nrow(train)],
+                test = train[1,c("high_id_win_pct", "low_id_win_pct")], k= 5, prob=T)
+
+indices <- attr(knnmodel, "nn.index")
+indices
+
+train[2:nrow(train),][indices,c("high_id_win_pct", "low_id_win_pct")]
+train[1,c("high_id_win_pct", "low_id_win_pct")]
+
+
+
+
+
