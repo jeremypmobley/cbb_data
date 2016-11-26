@@ -141,6 +141,9 @@ results_df %>%
 # load in tourney seeds lookup
 tourney_seeds <- read.csv("TourneySeeds.csv")
 
+source("C:/Users/Jeremy/Documents/GitHub/cbb_data/R/util_funs.R")
+
+
 
 # add in tourney seeds
 train <- merge(x = train, y = tourney_seeds, by.x = c('low_team_id', "Season"), by.y = c('Team', "Season"))
