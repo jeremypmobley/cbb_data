@@ -101,6 +101,10 @@ predict.glm(model1, newdata = data.frame(win_pct_diff=0.3))
 plot(1/(1+exp(-1*5.133*seq(0,1, by = 0.02))), ylab = "pct predicted winning", main="Plot of logistic model win_pct_diff to probability of winning")
 
 
+
+
+
+
 #################################################
 # plot out results using ggvis with hover over
 #################################################
@@ -145,17 +149,6 @@ names(train)[length(names(train))] <- "low_id_team_seed"
 train <- merge(x = train, y = tourney_seeds, by.x = c('high_team_id', "Season"), by.y = c('Team', "Season"))
 names(train)[length(names(train))] <- "high_id_team_seed"
 
-
-# clean the seed function
-clean_seed <- function(seedguy){
-  seedguy <- gsub("W","",seedguy)
-  seedguy <- gsub("X","",seedguy)
-  seedguy <- gsub("Y","",seedguy)
-  seedguy <- gsub("Z","",seedguy)
-  seedguy <- gsub("a","",seedguy)
-  seedguy <- gsub("b","",seedguy)
-  seedguy <- as.numeric(seedguy)
-}
 
 train$low_id_team_seed <- clean_seed(train$low_id_team_seed)
 train$high_id_team_seed <- clean_seed(train$high_id_team_seed)
