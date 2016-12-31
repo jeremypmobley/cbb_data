@@ -3,7 +3,7 @@
 #################################################
 ### LOAD DATA ###
 #################################################
-setwd("C:/Users/Jeremy/Desktop/Kaggle/kaggle_march_madness/march-machine-learning-mania-2016-v2/march-machine-learning-mania-2016-v2")
+setwd("C:/Users/Jeremy/Documents/GitHub/cbb_data/data")
 tourney_compact_results <- read.csv("TourneyCompactResults.csv")
 regular_season_compact_results <- read.csv("RegularSeasonCompactResults.csv")
 
@@ -11,7 +11,7 @@ regular_season_compact_results <- read.csv("RegularSeasonCompactResults.csv")
 source("C:/Users/Jeremy/Documents/GitHub/cbb_data/R/create_train.R")
 
 ### LOAD TRAINING DATA ###
-train <- create_train(tourney_compact_results)
+train <- create_train(tourney_compact_results, regular_season_compact_results)
 
 
 
@@ -43,6 +43,9 @@ print(paste0("Average logloss: ", mean(loglosses)))
 results_df <- data.frame(test_years=test_years, avg_log_loss=loglosses)
 plot(results_df, type = 'line', ylim = c(0.4,0.7))
 
+
+
+# Look at model predictions by win pct
 model1
 predict.glm(model1, newdata = data.frame(win_pct_diff=0.3))
 1/(1+exp(-1*5.133*0.05))
@@ -141,23 +144,14 @@ lines(kaggle_results_plot_df, col='green')
 # add in avg top 10 kaggle results to plot
 kaggle_top10_results_df <- kaggle_results_df[kaggle_results_df$rank<11,c("year", "score")]
 kaggle_avg_top10_results_df <- aggregate(x = kaggle_top10_results_df$score, 
-          by = list(kaggle_top10_results_df$year),
-          FUN = mean)
+          by = list(kaggle_top10_results_df$year), FUN = mean)
 names(kaggle_avg_top10_results_df) <- c("test_years", "avg_log_loss")
-
 lines(kaggle_avg_top10_results_df, col='blue')
 
 
-
-
-
+# add legend to plot
 legend("bottomleft", legend = c("model", "seed_benchmark", "kaggle_avg_top10", "kaggle_winners"), 
        fill=c("black", "red", "blue", "green"))
-
-
-
-
-
 
 
 

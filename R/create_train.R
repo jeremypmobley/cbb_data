@@ -5,16 +5,14 @@
 #################################################
 
 
-# assumes tourney_compact_results is loaded
 
-create_train <- function(tourney_compact_results) {
+create_train <- function(tourney_compact_results, regular_season_compact_results) {
+# Function to create the training data set
+#   inputs: tourney_compact_results, regular_season_compact_results
   
-  train <- tourney_compact_results
-  train$Wloc <- NULL  # remove unnecessary field
+  train <- rbind(tourney_compact_results, regular_season_compact_results)
   
-  # exclude play-in games from train
-  #train <- train[train$Daynum!=134,]
-  #train <- train[train$Daynum!=135,]
+  train$tourney_gm <- ifelse(test = train$Daynum > 133, yes = 1, no = 0)
   
   # add game id field to train dataframe
   train$id <- ifelse(test = train$Wteam<train$Lteam, 
@@ -52,7 +50,6 @@ create_train <- function(tourney_compact_results) {
   names(train)[length(train)-2] <- "high_id_wins"
   names(train)[length(train)-1] <- "high_id_losses"
   names(train)[length(train)] <- "high_id_win_pct"
-  
   rm(records_per_year)
   
   # create diff variable
