@@ -13,6 +13,8 @@ source("C:/Users/Jeremy/Documents/GitHub/cbb_data/R/create_train.R")
 ### LOAD TRAINING DATA ###
 train <- create_train(tourney_compact_results, regular_season_compact_results)
 
+# View Training data
+View(train)
 
 
 ### MODELING ###
