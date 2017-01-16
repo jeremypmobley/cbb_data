@@ -9,6 +9,7 @@ regular_season_compact_results <- read.csv("RegularSeasonCompactResults.csv")
 
 
 source("C:/Users/Jeremy/Documents/GitHub/cbb_data/R/create_train.R")
+source("~/GitHub/cbb_data/R/util_funs.R")
 
 
 
@@ -16,7 +17,8 @@ source("C:/Users/Jeremy/Documents/GitHub/cbb_data/R/create_train.R")
 train <- create_train(tourney_compact_results, regular_season_compact_results)
 
 # View Training data
-View(train)
+#View(train)
+
 
 
 ### MODELING ###
@@ -36,8 +38,7 @@ for (season in test_years){
   
   preds <- predict(model1, train[train$Season == season,], type = "response")
   answerkeyguy <- train[train$Season == season,"outcome"]
-  loglossguy <- (answerkeyguy * log(preds)) + ((1-answerkeyguy)*(log(1-preds)))
-  seasonlogloss <- -1/length(loglossguy) * sum(loglossguy)
+  seasonlogloss <- calc_logloss(preds, answerkeyguy)
   print(paste0(season, ": ", seasonlogloss))
   loglosses <- c(loglosses, seasonlogloss)
 }
@@ -48,8 +49,9 @@ results_df <- data.frame(test_years=test_years, avg_log_loss=loglosses)
 plot(results_df, type = 'line', ylim = c(0.4,0.7))
 
 
-
-
+eval_model <- function(model, test_years, print_results=TRUE){
+  
+}
 
 
 
@@ -90,9 +92,6 @@ results_df %>%
 
 # load in tourney seeds lookup
 tourney_seeds <- read.csv("TourneySeeds.csv")
-
-source("C:/Users/Jeremy/Documents/GitHub/cbb_data/R/util_funs.R")
-
 
 
 # add in tourney seeds

@@ -13,3 +13,12 @@ clean_seed <- function(seedguy){
 }
 
 
+
+# function to calculate the logloss given preds, actuals
+calc_logloss <- function(preds, actuals){
+  loglossguy <- (actuals * log(preds)) + ((1-actuals)*(log(1-preds)))
+  return(-1/length(loglossguy) * sum(loglossguy))
+}
+
+
+
