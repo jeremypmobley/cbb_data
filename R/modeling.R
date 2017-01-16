@@ -10,6 +10,8 @@ regular_season_compact_results <- read.csv("RegularSeasonCompactResults.csv")
 
 source("C:/Users/Jeremy/Documents/GitHub/cbb_data/R/create_train.R")
 
+
+
 ### LOAD TRAINING DATA ###
 train <- create_train(tourney_compact_results, regular_season_compact_results)
 
@@ -47,11 +49,6 @@ plot(results_df, type = 'line', ylim = c(0.4,0.7))
 
 
 
-# Look at model predictions by win pct
-model1
-predict.glm(model1, newdata = data.frame(win_pct_diff=0.3))
-1/(1+exp(-1*5.133*0.05))
-plot(1/(1+exp(-1*5.133*seq(0,1, by = 0.02))), ylab = "pct predicted winning", main="Plot of logistic model win_pct_diff to probability of winning")
 
 
 
