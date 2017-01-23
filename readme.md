@@ -12,12 +12,12 @@ https://www.kaggle.com/c/march-machine-learning-mania-2016/details/evaluation
 ### Kaggle Competition:
 Kaggle hosts an annual competition for the NCAA tournament.
 
-...
+https://www.kaggle.com/c/march-machine-learning-mania-2016
 
-### Data
+#### Data
 Modeling work is based on aggregate team game data provided through the kaggle competition: 
 
-https://www.kaggle.com/c/march-machine-learning-mania-2016
+
 
 
 ### Next steps:
