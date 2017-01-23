@@ -2,6 +2,38 @@
 
 ### Objective: Predict winner of NCAA men's college basketball games
 
-This code repo will aid in the building of models to predict the outcome of NCAA men's college basketball games.  Based on data from the kaggle competition: https://www.kaggle.com/c/march-machine-learning-mania-2016
+This code repo will aid in the building of models to predict the outcome of NCAA men's college basketball games.
 
-#### For more info check out the [Wiki](https://github.com/jeremypmobley/cbb_data/wiki)
+### Evaluation Metric:
+Log loss 
+
+https://www.kaggle.com/c/march-machine-learning-mania-2016/details/evaluation
+
+### Kaggle Competition:
+Kaggle hosts an annual competition for the NCAA tournament.
+
+...
+
+### Data
+Modeling work is based on aggregate team game data provided through the kaggle competition: 
+
+https://www.kaggle.com/c/march-machine-learning-mania-2016
+
+
+### Next steps:
+* README
+	* Move everything from wiki to readme
+* Training data
+	* Build better features!
+		* Include PPP metrics
+		* Calculate adjusted PPP metrics
+* Modeling
+	* Set up model evaluation framework
+	* Train on more than just tournament games
+	* Build out knn modeling
+	* Build pointspread predictions models
+* Expand modeling beyond team aggregate data
+	* Individual player level data
+		* Where to get this data?
+	* Pointspread data
+	* Recruiting data
