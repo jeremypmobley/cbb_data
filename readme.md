@@ -20,8 +20,7 @@ Modeling work is based on aggregate team game data provided through the kaggle c
 ## How this repo is structured:
 1. Raw data is stored in the /data folder
 2. The create_train.R script creates the training data set
-3. An updated copy of this training data set is stored in the /data folder
-4. The modeling.R script reads in the training data set and builds models to predict game outcomes 
+3. The modeling.R script builds models to predict game outcomes 
 	- Includes code to evaluate those models
 
 All R code is stored in the /R folder.
