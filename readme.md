@@ -1,11 +1,11 @@
-## NCAA College Basketball Game Outcome Modeling ##
+# NCAA College Basketball Outcome Modeling ##
 
-### Objective: Predict winner of NCAA men's college basketball games
+## Objective: Predict winner of NCAA men's college basketball games
 
 This code repo will aid in the building of models to predict the outcome of NCAA men's college basketball games.
 
-### Evaluation Metric:
-Log loss 
+## Evaluation Metric:
+Log loss
 
 https://www.kaggle.com/c/march-machine-learning-mania-2016/details/evaluation
 
@@ -14,15 +14,15 @@ Kaggle hosts an annual competition for the NCAA tournament.
 
 https://www.kaggle.com/c/march-machine-learning-mania-2016
 
-#### Data
+### Data
 Modeling work is based on aggregate team game data provided through the kaggle competition: 
 
 
 
 
-### Next steps:
+## Next steps:
 * README
-	* Move everything from wiki to readme
+	* Finish explanation of evaluation metric
 * Training data
 	* Build better features!
 		* Include PPP metrics
