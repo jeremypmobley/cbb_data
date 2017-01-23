@@ -10,14 +10,23 @@ Log loss
 https://www.kaggle.com/c/march-machine-learning-mania-2016/details/evaluation
 
 ### Kaggle Competition:
-Kaggle hosts an annual competition for the NCAA tournament.
+Kaggle hosts an annual competition for the NCAA tournament:
 
 https://www.kaggle.com/c/march-machine-learning-mania-2016
 
 ### Data
-Modeling work is based on aggregate team game data provided through the kaggle competition: 
+Modeling work is based on aggregate team game data provided through the kaggle competition.
 
+## How this repo is structured:
+1. Raw data is stored in the /data folder
+2. The create_train.R script creates the training data set
+3. An updated copy of this training data set is stored in the /data folder
+4. The modeling.R script reads in the training data set and builds models to predict game outcomes 
+	- Includes code to evaluate those models
 
+All R code is stored in the /R folder.
+
+All modeling output is stored in the /output folder.
 
 
 ## Next steps:
