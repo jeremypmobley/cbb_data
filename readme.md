@@ -30,9 +30,11 @@ How do we know how close we are to predicting truth?
 | 0.95 | 0.05  | 
 | 0.99 | 0.01  | 
 
-The metric is symmetric.
+
 
 If Team A is predicted to win with 1% probability but does pull off the upset the logloss value is 4.61.  
+
+The metric is symmetric.
 
 The upper bound for any model is an average log loss of 0.69.  If we knew nothing about any of the teams and simply predicted every game as a coin flip the model would score a 0.69.
 
