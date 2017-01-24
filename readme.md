@@ -4,8 +4,37 @@
 
 This code repo will aid in the building of models to predict the outcome of NCAA men's college basketball games.
 
+The short-term goals for this project are:
+
+1. Better understand how accurately college basketball games can be predicted
+2. Better understand which team aggregate stats are the most important predictors
+3. Prepare a model for the upcoming tournament
+
+There may be plans in the future to extend this modeling work beyond team aggregate stats to include player-level game data, recruiting data, coaches, venue, distance traveled, and other extenuating factors.
+
+
 ## Evaluation Metric:
-Log loss
+Minimize the Log loss
+
+The goal is to build a model to predict the probability that Team A will win against Team B.  
+
+How do we know how close we are to predicting truth?
+
+| Pred | Logloss |
+| ---- |:-----:|
+| 0.01 | 4.61  | 
+| 0.05 | 3.00  | 
+| 0.10 | 2.30  | 
+| 0.50 | 0.69  | 
+| 0.90 | 0.11  | 
+| 0.95 | 0.05  | 
+| 0.99 | 0.01  | 
+
+The metric is symmetric.
+
+If Team A is predicted to win with 1% probability but does pull off the upset the logloss value is 4.61.  
+
+The upper bound for any model is an average log loss of 0.69.  If we knew nothing about any of the teams and simply predicted every game as a coin flip the model would score a 0.69.
 
 https://www.kaggle.com/c/march-machine-learning-mania-2016/details/evaluation
 
@@ -37,7 +66,6 @@ All modeling output is stored in the /output folder.
 		* Calculate adjusted PPP metrics
 * Modeling
 	* Set up model evaluation framework
-	* Train on more than just tournament games
 	* Build out knn modeling
 	* Build pointspread predictions models
 * Expand modeling beyond team aggregate data
@@ -45,3 +73,5 @@ All modeling output is stored in the /output folder.
 		* Where to get this data?
 	* Pointspread data
 	* Recruiting data
+	* Coach
+	* Venue / distance traveled
