@@ -1,23 +1,12 @@
 
 
 #################################################
-### LOAD DATA ###
-#################################################
-setwd("C:/Users/Jeremy/Documents/GitHub/cbb_data/data")
-tourney_compact_results <- read.csv("TourneyCompactResults.csv")
-regular_season_compact_results <- read.csv("RegularSeasonCompactResults.csv")
-
-
-source("C:/Users/Jeremy/Documents/GitHub/cbb_data/R/create_train.R")
-source("~/GitHub/cbb_data/R/util_funs.R")
-
-
-
 ### LOAD TRAINING DATA ###
-train <- create_train(tourney_compact_results, regular_season_compact_results)
-
-# View Training data
-#View(train)
+#################################################
+source("~/GitHub/cbb_data/R/util_funs.R")
+source("~/GitHub/cbb_data/R/create_train.R")
+train <- create_train()
+#################################################
 
 
 
@@ -28,15 +17,16 @@ test_years <- seq(from = 2003, to = 2015)
 
 # Create logistic model based on win_pct_diff to predict outcome
 # set model formula
-model_formula <- as.formula("outcome ~ win_pct_diff -1")
 
+features_to_include <- list("win_pct_diff")
+model_formula <- as.formula(paste0("outcome ~ ", paste(features_to_include, collapse=" + ")))
 loglosses <- c()
 for (season in test_years){
   model1 <- glm(model_formula, 
-                data = train[train$Season < season,],  # only train on years prior to season being predicted
+                data = train[train$Season < season & train$Daynum > 100,],  # only train on years prior to season being predicted
                 family = binomial("logit"))
   
-  preds <- predict(model1, train[train$Season == season,], type = "response")
+  preds <- predict(model1, train[train$Season == season & train$tourney_gm == 1,], type = "response")
   answerkeyguy <- train[train$Season == season,"outcome"]
   seasonlogloss <- calc_logloss(preds, answerkeyguy)
   print(paste0(season, ": ", seasonlogloss))
@@ -49,6 +39,10 @@ results_df <- data.frame(test_years=test_years, avg_log_loss=loglosses)
 plot(results_df, type = 'line', ylim = c(0.4,0.7))
 
 
+
+
+
+# Function to evaluate model performance
 eval_model <- function(model, test_years, print_results=TRUE){
   
 }
@@ -170,7 +164,6 @@ indices
 
 train[2:nrow(train),][indices,c("high_id_win_pct", "low_id_win_pct")]
 train[1,c("high_id_win_pct", "low_id_win_pct")]
-
 
 
 
