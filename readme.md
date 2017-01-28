@@ -1,4 +1,4 @@
-# NCAA College Basketball Outcome Modeling ##
+# College Basketball Modeling ##
 
 ## Objective: Predict winner of NCAA men's college basketball games
 
