@@ -1,62 +1,114 @@
 
 
 #################################################
-# create training data set of past tournament games
+# create training data set
 #################################################
 
 
+setwd("C:/Users/Jeremy/Documents/GitHub/cbb_data/data/2017")
+tourney_compact_results <- read.csv("TourneyCompactResults.csv")
+regular_season_compact_results <- read.csv("RegularSeasonCompactResults.csv")  
 
-create_train <- function(tourney_compact_results, regular_season_compact_results) {
-# Function to create the training data set
-#   inputs: tourney_compact_results, regular_season_compact_results
-  
-  train <- rbind(tourney_compact_results, regular_season_compact_results)
-  
-  train$tourney_gm <- ifelse(test = train$Daynum > 133, yes = 1, no = 0)
-  
-  # add game id field to train dataframe
-  train$id <- ifelse(test = train$Wteam<train$Lteam, 
-                     yes = paste0(train$Season,'_',train$Wteam,'_',train$Lteam),
-                     no = paste0(train$Season,'_',train$Lteam,'_',train$Wteam))
-  
-  # outcome is 1 if lower team id won
-  train$outcome <- ifelse(train$Wteam<train$Lteam,1,0)
-  
-  # add fields for low/high team id
-  train$low_team_id <- ifelse(test = train$Wteam<train$Lteam,                             
-                              yes = train$Wteam,
-                              no = train$Lteam)
-  
-  train$high_team_id <- ifelse(test = train$Wteam<train$Lteam, 
-                               yes = train$Lteam,
-                               no = train$Wteam)
-  
-  wins_per_year <- data.frame(table(regular_season_compact_results$Wteam,regular_season_compact_results$Season))
-  names(wins_per_year) <- c('team_id','season','wins')
-  losses_per_year <- data.frame(table(regular_season_compact_results$Lteam,regular_season_compact_results$Season))
-  names(losses_per_year) <- c('team_id','season','losses')
-  
-  records_per_year <- merge(wins_per_year, losses_per_year)
-  records_per_year$win_pct <- records_per_year$wins/(records_per_year$wins + records_per_year$losses)
-  rm(wins_per_year, losses_per_year)
-  
-  # add win/loss pct data to train
-  train <- merge(x = train, y = records_per_year, by.x=c("low_team_id", "Season"), by.y = c("team_id", "season"), all.x=TRUE)
-  names(train)[length(train)-2] <- "low_id_wins"
-  names(train)[length(train)-1] <- "low_id_losses"
-  names(train)[length(train)] <- "low_id_win_pct"
-  
-  train <- merge(x = train, y = records_per_year, by.x=c("high_team_id", "Season"), by.y = c("team_id", "season"), all.x=TRUE)
-  names(train)[length(train)-2] <- "high_id_wins"
-  names(train)[length(train)-1] <- "high_id_losses"
-  names(train)[length(train)] <- "high_id_win_pct"
-  rm(records_per_year)
-  
-  # create diff variable
-  train$win_pct_diff <- train$low_id_win_pct - train$high_id_win_pct
-  
-  return(train)
+# combine historical regular season and tournament results
+train <- rbind(tourney_compact_results, regular_season_compact_results)
+
+# add indicator field for tourney_gm
+train$tourney_gm <- ifelse(test = train$Daynum > 133, yes = 1, no = 0)
+
+# add game id field to train dataframe - tourney identifier only, not unique for regular season games
+train$id <- ifelse(test = train$Wteam<train$Lteam, 
+                   yes = paste0(train$Season,'_',train$Wteam,'_',train$Lteam),
+                   no = paste0(train$Season,'_',train$Lteam,'_',train$Wteam))
+
+# add outcome field - outcome is 1 if lower team id won
+train$outcome <- ifelse(train$Wteam < train$Lteam, 1, 0)
+
+# add in score_diff field for final score differential
+train$score_diff <- ifelse(train$Wteam<train$Lteam, 
+                           train$Wscore - train$Lscore, 
+                           train$Lscore - train$Wscore)
+
+# add fields for low/high team id
+train$low_team_id <- ifelse(test = train$Wteam<train$Lteam, 
+                            yes = train$Wteam, no = train$Lteam)
+
+train$high_team_id <- ifelse(test = train$Wteam<train$Lteam, 
+                             yes = train$Lteam, no = train$Wteam)
+
+
+# Walk through data set day by day to calculate ongoing advanced metrics
+
+# put training data set in correct order to loop through
+train <- train[order(train$Season, train$Daynum),]
+
+train_adv <- data.frame()
+# loop through each season in the data set
+for (season in 1985) {
+#for (season in unique(train$Season)) {
+  print(paste0(season))
+  season_train <- train[train$Season==season,]
+  # create teams list control structure df to keep track of records along the way
+  teams_list <- data.frame(teamid = unique(union(season_train$Wteam, season_train$Lteam)), 
+                           wins = 0, losses = 0, elo = 1000)
+  # loop through each day of the season
+  gamedays <- sort(unique(season_train$Daynum))
+  for (day in gamedays) {
+    # create a subset dataframe of only games played that day
+    games_that_day <- season_train[season_train$Daynum==day,]
+
+    # loop through each game that day
+    for (game in 1:nrow(games_that_day)) {
+
+      # create new fields in games_that_day for teams stats coming into the game
+        # used as features in modeling to predict outcome of game
+      # wins
+      games_that_day$low_id_wins[game] <- teams_list[teams_list$teamid==games_that_day$low_team_id[game],"wins"]
+      games_that_day$high_id_wins[game] <- teams_list[teams_list$teamid==games_that_day$high_team_id[game],"wins"]
+      # losses
+      games_that_day$low_id_losses[game] <- teams_list[teams_list$teamid==games_that_day$low_team_id[game],"losses"]
+      games_that_day$high_id_losses[game] <- teams_list[teams_list$teamid==games_that_day$high_team_id[game],"losses"]
+      # elo
+      games_that_day$low_id_elo[game] <- teams_list[teams_list$teamid==games_that_day$low_team_id[game],"elo"]
+      games_that_day$high_id_elo[game] <- teams_list[teams_list$teamid==games_that_day$high_team_id[game],"elo"]
+      
+      # update teams_list control structure with outcome of game
+      winning_team <- games_that_day$Wteam[game]
+      losing_team <- games_that_day$Lteam[game]
+      # update wins
+      teams_list[teams_list$teamid==winning_team,"wins"] <- teams_list[teams_list$teamid==winning_team,"wins"] + 1
+      # update losses
+      teams_list[teams_list$teamid==losing_team,"losses"] <- teams_list[teams_list$teamid==losing_team,"losses"] + 1
+      # update elo
+      k <- 32
+      r_w <- 10^(teams_list[teams_list$teamid==winning_team,"elo"]/400)
+      r_l <- 10^(teams_list[teams_list$teamid==losing_team,"elo"]/400)
+      e_w <- r_w / (r_w + r_l)
+      e_l <- r_w / (r_w + r_l)
+      teams_list[teams_list$teamid==winning_team, "elo"] <- teams_list[teams_list$teamid==winning_team,"elo"] + (k * (1-e_w))
+      teams_list[teams_list$teamid==losing_team, "elo"] <- teams_list[teams_list$teamid==losing_team,"elo"] - (k * (0-e_l))
+    }
+    # add updated training records to train_adv
+    train_adv <- rbind(train_adv, games_that_day)
+  }
 }
+
+
+
+# add field for elo_diff
+train_adv$elo_diff <- train_adv$low_id_elo - train_adv$high_id_elo
+
+# create field for win_pct_diff
+
+
+
+# Final Step: Write training data csv back to git repo /data directory
+
+# write train data set out to /data folder in git repo
+#setwd("C:/Users/Jeremy/Documents/GitHub/cbb_data/data")
+#write.csv(train_adv, "~/GitHub/cbb_data/data/train_adv_85.csv", row.names=FALSE)
+
+
+
 
 
 
@@ -92,5 +144,114 @@ create_train <- function(tourney_compact_results, regular_season_compact_results
 # train$seed_benchmark_pred <- 0.5 - (train$seed_diff * 0.03)
 
 
+
+
+
+
+# full ppp approach
+
+setwd("C:/Users/Jeremy/Documents/GitHub/cbb_data/data/2017")
+tourney_detailed_results <- read.csv("TourneyDetailedResults.csv")
+regular_season_detailed_results <- read.csv("RegularSeasonDetailedResults.csv")
+
+train <- rbind(tourney_detailed_results, regular_season_detailed_results)
+
+# add possession fields
+train$wposs <- train$Wfga - train$Wor + train$Wto + 0.475*train$Wfta
+train$lposs <- train$Lfga - train$Lor + train$Lto + 0.475*train$Lfta
+train$avgposs <- (train$wposs + train$lposs)/2
+# calc points per possession (ppp)
+train$wppp <- train$Wscore / train$avgposs
+train$lppp <- train$Lscore / train$avgposs
+
+
+
+
+# add indicator field for tourney_gm
+train$tourney_gm <- ifelse(test = train$Daynum > 133, yes = 1, no = 0)
+
+# add game id field to train dataframe - tourney identifier only, not unique for regular season games
+train$id <- ifelse(test = train$Wteam<train$Lteam, 
+                   yes = paste0(train$Season,'_',train$Wteam,'_',train$Lteam),
+                   no = paste0(train$Season,'_',train$Lteam,'_',train$Wteam))
+
+# add outcome field - outcome is 1 if lower team id won
+train$outcome <- ifelse(train$Wteam < train$Lteam, 1, 0)
+
+# add in score_diff field for final score differential
+train$score_diff <- ifelse(train$Wteam<train$Lteam, 
+                           train$Wscore - train$Lscore, 
+                           train$Lscore - train$Wscore)
+
+# add fields for low/high team id
+train$low_team_id <- ifelse(test = train$Wteam<train$Lteam, 
+                            yes = train$Wteam, no = train$Lteam)
+
+train$high_team_id <- ifelse(test = train$Wteam<train$Lteam, 
+                             yes = train$Lteam, no = train$Wteam)
+
+
+
+
+# Walk through data set day by day to calculate ongoing advanced metrics
+
+# put training data set in correct order to loop through
+train <- train[order(train$Season, train$Daynum),]
+
+
+# dev vars
+season <- 2003
+day <- gamedays[1]
+
+train_adv <- data.frame()
+# loop through each season in the data set
+for (season in 2003) {
+  #for (season in unique(train$Season)) {
+  print(paste0(season))
+  season_train <- train[train$Season==season,]
+  # create teams list control structure df to keep track of records along the way
+  teams_list <- data.frame(teamid = unique(union(season_train$Wteam, season_train$Lteam)), 
+                           wins = 0, losses = 0,  # needed to calculate running average
+                           raw_off_ppp = 0, raw_def_ppp = 0, 
+                           avg_off_perf_idx = 1.0, avg_def_perf_idx = 1.0)
+  # loop through each day of the season
+  gamedays <- sort(unique(season_train$Daynum))
+  for (day in gamedays) {
+    # create a subset dataframe of only games played that day
+    games_that_day <- season_train[season_train$Daynum==day,]
+    
+    # loop through each game that day
+    for (game in 1:nrow(games_that_day)) {
+      
+      # create new fields in games_that_day for teams stats coming into the game
+      # used as features in modeling to predict outcome of game
+      # wins
+      games_that_day$low_id_wins[game] <- teams_list[teams_list$teamid==games_that_day$low_team_id[game],"wins"]
+      games_that_day$high_id_wins[game] <- teams_list[teams_list$teamid==games_that_day$high_team_id[game],"wins"]
+      # losses
+      games_that_day$low_id_losses[game] <- teams_list[teams_list$teamid==games_that_day$low_team_id[game],"losses"]
+      games_that_day$high_id_losses[game] <- teams_list[teams_list$teamid==games_that_day$high_team_id[game],"losses"]
+
+      # raw ppp
+      games_that_day$low_id_raw_off_ppp[game] <- teams_list[teams_list$teamid==games_that_day$low_team_id[game],"raw_off_ppp"]
+      games_that_day$high_id_raw_off_ppp[game] <- teams_list[teams_list$teamid==games_that_day$high_team_id[game],"raw_off_ppp"]
+      games_that_day$low_id_raw_def_ppp[game] <- teams_list[teams_list$teamid==games_that_day$low_team_id[game],"raw_def_ppp"]
+      games_that_day$high_id_raw_def_ppp[game] <- teams_list[teams_list$teamid==games_that_day$high_team_id[game],"raw_def_ppp"]
+      
+      # update teams_list control structure with outcome of game
+      winning_team <- games_that_day$Wteam[game]
+      losing_team <- games_that_day$Lteam[game]
+      # update wins
+      teams_list[teams_list$teamid==winning_team,"wins"] <- teams_list[teams_list$teamid==winning_team,"wins"] + 1
+      # update losses
+      teams_list[teams_list$teamid==losing_team,"losses"] <- teams_list[teams_list$teamid==losing_team,"losses"] + 1
+      # update ppp
+      teams_list[teams_list$teamid==winning_team, "raw_off_ppp"] <- teams_list[teams_list$teamid==winning_team, "raw_off_ppp"] * (wins + losses) + 
+      #teams_list[teams_list$teamid==losing_team, "elo"] <- teams_list[teams_list$teamid==losing_team,"elo"] - (teams_list[teams_list$teamid==winning_team,"elo"])/10
+    }
+    # add updated training records to train_adv
+    train_adv <- rbind(train_adv, games_that_day)
+  }
+}
 
 
