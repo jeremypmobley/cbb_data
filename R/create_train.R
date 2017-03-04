@@ -8,6 +8,10 @@
 setwd("C:/Users/Jeremy/Documents/GitHub/cbb_data/data/2017")
 tourney_compact_results <- read.csv("TourneyCompactResults.csv")
 regular_season_compact_results <- read.csv("RegularSeasonCompactResults.csv")  
+teams <- read.csv("Teams.csv")
+source("~/GitHub/cbb_data/R/util_funs.R")
+
+
 
 # combine historical regular season and tournament results
 train <- rbind(tourney_compact_results, regular_season_compact_results)
@@ -41,10 +45,11 @@ train$high_team_id <- ifelse(test = train$Wteam<train$Lteam,
 # put training data set in correct order to loop through
 train <- train[order(train$Season, train$Daynum),]
 
+start_time <- Sys.time()
 train_adv <- data.frame()
 # loop through each season in the data set
-for (season in 1985) {
-#for (season in unique(train$Season)) {
+#for (season in 1985) {
+for (season in unique(train$Season)) {
   print(paste0(season))
   season_train <- train[train$Season==season,]
   # create teams list control structure df to keep track of records along the way
@@ -71,21 +76,23 @@ for (season in 1985) {
       games_that_day$low_id_elo[game] <- teams_list[teams_list$teamid==games_that_day$low_team_id[game],"elo"]
       games_that_day$high_id_elo[game] <- teams_list[teams_list$teamid==games_that_day$high_team_id[game],"elo"]
       
-      # update teams_list control structure with outcome of game
-      winning_team <- games_that_day$Wteam[game]
-      losing_team <- games_that_day$Lteam[game]
-      # update wins
-      teams_list[teams_list$teamid==winning_team,"wins"] <- teams_list[teams_list$teamid==winning_team,"wins"] + 1
-      # update losses
-      teams_list[teams_list$teamid==losing_team,"losses"] <- teams_list[teams_list$teamid==losing_team,"losses"] + 1
-      # update elo
-      k <- 32
-      r_w <- 10^(teams_list[teams_list$teamid==winning_team,"elo"]/400)
-      r_l <- 10^(teams_list[teams_list$teamid==losing_team,"elo"]/400)
-      e_w <- r_w / (r_w + r_l)
-      e_l <- r_w / (r_w + r_l)
-      teams_list[teams_list$teamid==winning_team, "elo"] <- teams_list[teams_list$teamid==winning_team,"elo"] + (k * (1-e_w))
-      teams_list[teams_list$teamid==losing_team, "elo"] <- teams_list[teams_list$teamid==losing_team,"elo"] - (k * (0-e_l))
+      # only update for non-tourney games to create the proper training data set as of pre-tourney
+      
+      if (day < 133) {
+        # update teams_list control structure with outcome of game
+        winning_team <- games_that_day$Wteam[game]
+        losing_team <- games_that_day$Lteam[game]
+        # update wins
+        teams_list[teams_list$teamid==winning_team,"wins"] <- teams_list[teams_list$teamid==winning_team,"wins"] + 1
+        # update losses
+        teams_list[teams_list$teamid==losing_team,"losses"] <- teams_list[teams_list$teamid==losing_team,"losses"] + 1
+        # calculate new elo ratings
+        new_ratings <- calc_new_elo_rating(teams_list[teams_list$teamid==winning_team,"elo"],
+                                           teams_list[teams_list$teamid==losing_team,"elo"])
+        # update elo ratings
+        teams_list[teams_list$teamid==winning_team, "elo"] <- new_ratings[1]
+        teams_list[teams_list$teamid==losing_team, "elo"] <- new_ratings[2]
+      }
     }
     # add updated training records to train_adv
     train_adv <- rbind(train_adv, games_that_day)
@@ -93,11 +100,17 @@ for (season in 1985) {
 }
 
 
+# look at teams_list
+#teams_list <- merge(teams_list, teams, by.x = c("teamid"), by.y=c("Team_Id"))
+#teams_list_sorted <- teams_list[order(teams_list$elo),]
+
 
 # add field for elo_diff
 train_adv$elo_diff <- train_adv$low_id_elo - train_adv$high_id_elo
+#train_adv$elo_diff_sq <- (train_adv$low_id_elo - train_adv$high_id_elo)^2
 
-# create field for win_pct_diff
+
+train_adv_tourney <- train_adv[train_adv$tourney_gm == 1,]
 
 
 
@@ -105,8 +118,7 @@ train_adv$elo_diff <- train_adv$low_id_elo - train_adv$high_id_elo
 
 # write train data set out to /data folder in git repo
 #setwd("C:/Users/Jeremy/Documents/GitHub/cbb_data/data")
-#write.csv(train_adv, "~/GitHub/cbb_data/data/train_adv_85.csv", row.names=FALSE)
-
+#write.csv(train_adv, "~/GitHub/cbb_data/data/train_adv.csv", row.names=FALSE)
 
 
 
