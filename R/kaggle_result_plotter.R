@@ -33,15 +33,16 @@ for (year in years){
 
 
 
-#plot last two years with my submission
+# plot last two years
 two_years <- c(2015, 2016)
 
 par(mfrow=c(1,length(two_years))) 
 for (year in two_years){
   leaderboard_df <- kaggle_results_df[kaggle_results_df$year == year,]
+  top_num_to_plot <- round(0.7 * nrow(leaderboard_df))
   plot(leaderboard_df$score[1:top_num_to_plot], 
-       ylab = "logloss", 
-       xlab = "", 
+       ylab = "Log loss", 
+       xlab = "Competition Rank", 
        ylim = c(0.4,0.6), main = year
   )
   #abline(v = 10, col="blue")

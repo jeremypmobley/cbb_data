@@ -1,24 +1,28 @@
-
+  
 
 #################################################
 ### LOAD TRAINING DATA ###
 #################################################
 source("~/GitHub/cbb_data/R/util_funs.R")
-source("~/GitHub/cbb_data/R/create_train.R")
-train <- create_train()
+setwd("C:/Users/Jeremy/Documents/GitHub/cbb_data/data")
+train <- read.csv("~/GitHub/cbb_data/data/train_adv.csv")
 #################################################
+
+
+library(ggplot2)
+
 
 
 
 ### MODELING ###
 
 # create years to evaluate list
-test_years <- seq(from = 2003, to = 2015)
+test_years <- seq(from = 2003, to = 2016)
 
 # Create logistic model based on win_pct_diff to predict outcome
 # set model formula
 
-features_to_include <- list("win_pct_diff")
+features_to_include <- list("elo_diff")
 model_formula <- as.formula(paste0("outcome ~ ", paste(features_to_include, collapse=" + ")))
 loglosses <- c()
 for (season in test_years){
@@ -26,8 +30,8 @@ for (season in test_years){
                 data = train[train$Season < season & train$Daynum > 100,],  # only train on years prior to season being predicted
                 family = binomial("logit"))
   
-  preds <- predict(model1, train[train$Season == season & train$tourney_gm == 1,], type = "response")
-  answerkeyguy <- train[train$Season == season,"outcome"]
+  preds <- predict(model1, train[train$Season == season & train$tourney_gm == 1,], type = "response")  # only predict tourney games
+  answerkeyguy <- train[train$Season == season & train$tourney_gm == 1,"outcome"]  # only evaluate tourney games
   seasonlogloss <- calc_logloss(preds, answerkeyguy)
   print(paste0(season, ": ", seasonlogloss))
   loglosses <- c(loglosses, seasonlogloss)
@@ -35,16 +39,45 @@ for (season in test_years){
 print(paste0("Average logloss: ", mean(loglosses)))
 
 
-results_df <- data.frame(test_years=test_years, avg_log_loss=loglosses)
-plot(results_df, type = 'line', ylim = c(0.4,0.7))
+# create results df for plot
+results_df <- data.frame(test_years=as.factor(test_years), avg_log_loss=loglosses)
+
+# plot of model evaluation
+ggplot(results_df, aes(x=test_years, y = avg_log_loss, group=1)) + 
+  geom_line() +
+  geom_hline(yintercept=0.69, col='red') +
+  labs(title="Average tournament log loss",x="Year", y = "Log Loss")
+
+
+# read in kaggle results
+kaggle_results_df <- read.csv("~/Github/cbb_data/data/kaggle_results_df.csv")
+kaggle_results_winners_df <- kaggle_results_df[kaggle_results_df$rank==1,c("year", "score")]
+names(kaggle_results_winners_df) <- c("test_years", "avg_log_loss")
+kaggle_results_winners_df$test_years <- as.factor(kaggle_results_winners_df$test_years)
+
+
+# plot of model evaluation with kaggle winners in blue
+ggplot(results_df, aes(x=test_years, y = avg_log_loss, group=1)) + 
+  geom_line() +
+  geom_hline(yintercept=0.69, col='red') +
+  geom_line(data = kaggle_results_winners_df, aes(x=test_years, y = avg_log_loss), col = "blue") +
+  labs(title="Average tournament log loss",x="Year", y = "Log Loss")
+
+
+
 
 
 
 
 
 # Function to evaluate model performance
-eval_model <- function(model, test_years, print_results=TRUE){
-  
+eval_model <- function(model, test_years){
+  for (season in test_years){
+    preds <- predict(model, train[train$Season == season & train$tourney_gm == 1,], type = "response")
+    answerkeyguy <- train[train$Season == season,"outcome"]
+    seasonlogloss <- calc_logloss(preds, answerkeyguy)
+    print(paste0(season, ": ", seasonlogloss))
+  }
 }
 
 
@@ -117,33 +150,57 @@ for (season in test_years){
 print(paste0("Average logloss: ", mean(seed_benchmark_loglosses)))
 
 # create seed benchmark df
-seed_benchmark_results_df <- data.frame(test_years=test_years, avg_log_loss=loglosses)
-
-# add seed benchmark line to results plot
-lines(seed_benchmark_results_df, col='red')
+seed_benchmark_results_df <- data.frame(test_years=test_years, avg_log_loss=seed_benchmark_loglosses)
+seed_benchmark_results_df$test_years <- as.factor(seed_benchmark_results_df$test_years)
 
 
 
+# plot of model evaluation with kaggle winners and seed benchmark
+ggplot(results_df, aes(x=test_years, y = avg_log_loss, group=1)) + 
+  geom_line() +
+  geom_hline(yintercept=0.69, col='red') +
+  geom_line(data = kaggle_results_winners_df, aes(x=test_years, y = avg_log_loss), col = "blue") +
+  geom_line(data = seed_benchmark_results_df, aes(x=test_years, y = avg_log_loss), col = "green") +
+  labs(title="Average tournament log loss",x="Year", y = "Log Loss")
 
-# read in kaggle results
-kaggle_results_df <- read.csv("~/Github/cbb_data/data/kaggle_results_df.csv")
-kaggle_results_plot_df <- kaggle_results_df[kaggle_results_df$rank==1,c("year", "score")]
-names(kaggle_results_plot_df) <- c("test_years", "avg_log_loss")
 
-# add kaggle winners to results plot
-lines(kaggle_results_plot_df, col='green')
+
+
+
+
 
 # add in avg top 10 kaggle results to plot
 kaggle_top10_results_df <- kaggle_results_df[kaggle_results_df$rank<11,c("year", "score")]
 kaggle_avg_top10_results_df <- aggregate(x = kaggle_top10_results_df$score, 
           by = list(kaggle_top10_results_df$year), FUN = mean)
 names(kaggle_avg_top10_results_df) <- c("test_years", "avg_log_loss")
-lines(kaggle_avg_top10_results_df, col='blue')
+kaggle_avg_top10_results_df$test_years <- as.factor(kaggle_avg_top10_results_df$test_years)
 
 
-# add legend to plot
-legend("bottomleft", legend = c("model", "seed_benchmark", "kaggle_avg_top10", "kaggle_winners"), 
-       fill=c("black", "red", "blue", "green"))
+
+# plot of model evaluation with kaggle winners, seed benchmark, kaggle top 10
+ggplot(results_df, aes(x=test_years, y = avg_log_loss, group=1)) + 
+  geom_line() +
+  geom_hline(yintercept=0.69, col='red') +
+  geom_line(data = kaggle_results_winners_df, aes(x=test_years, y = avg_log_loss), col = "blue") +
+  geom_line(data = kaggle_avg_top10_results_df, aes(x=test_years, y = avg_log_loss), col = "light blue") +
+  labs(title="Average tournament log loss",x="Year", y = "Log Loss")
+
+
+
+
+
+
+
+##### looking into log loss
+calc_logloss(preds = 0.99, actuals = 1)
+logloss_df <- data.frame(preds=seq(from = 0.01, to = 1.00, by = 0.01), logloss=0)
+logloss_df$logloss <- calc_logloss(preds = logloss_df$preds[2], actuals = 1)
+for(i in 1:nrow(logloss_df)){
+  logloss_df$logloss[i] <- calc_logloss(preds = logloss_df$preds[i], actuals = 1)
+}
+plot(logloss_df, xlab = "Prediction", ylab="Log loss", main="Log loss by Prediction", type='l')
+###################################
 
 
 
@@ -155,15 +212,32 @@ legend("bottomleft", legend = c("model", "seed_benchmark", "kaggle_avg_top10", "
 ##### kNN modeling ####
 
 library(FNN)
-knnmodel <- knn(train = train[2:nrow(train),c("high_id_win_pct", "low_id_win_pct")], 
+knnmodel <- knn(train = train[2:nrow(train),c("high_id_elo", "low_id_elo")], 
                 cl = train$outcome[2:nrow(train)],
-                test = train[1,c("high_id_win_pct", "low_id_win_pct")], k= 5, prob=T)
+                test = train[1,c("high_id_elo", "low_id_elo")], k= 8, prob=TRUE)
 
-indices <- attr(knnmodel, "nn.index")
-indices
+attr(knnmodel, "nn.index")
+attr(knnmodel, "prob")
 
-train[2:nrow(train),][indices,c("high_id_win_pct", "low_id_win_pct")]
-train[1,c("high_id_win_pct", "low_id_win_pct")]
+train[2:nrow(train),][attr(knnmodel, "nn.index"),c("high_id_elo", "low_id_elo", "outcome")]
+train[1,c("high_id_elo", "low_id_elo")]
+
+
+
+##################################################
+
+
+knnmodel <- knn(train = train[train$tourney_gm == 0, c("high_id_elo", "low_id_elo")], 
+                cl = train$outcome[train$tourney_gm == 0],
+                test = train[train$tourney_gm == 1, c("high_id_elo", "low_id_elo")], 
+                k = 15, prob=TRUE)
+
+preds <- attr(knnmodel, "prob")
+head(preds)
+preds <- preds - 0.00001
+
+answerkeyguy <- train[train$Season == season & train$tourney_gm == 1,"outcome"]  # only evaluate tourney games
+calc_logloss(preds, answerkeyguy)
 
 
 
