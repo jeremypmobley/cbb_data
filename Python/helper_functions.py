@@ -3,6 +3,7 @@
 
 import pandas as pd
 import datetime
+import numpy as np
 
 
 
@@ -88,6 +89,13 @@ def add_in_team_names(df, teams):
     return df
 
 
+def add_in_date(df, seasons):
+    df = pd.merge(left=df, right=seasons[['Season', 'DayZero']], 
+                                left_on='Season', right_on='Season', how='inner')
+    df['game_date'] = df.apply(lambda row: datetime.datetime.strptime(row['DayZero'],"%m/%d/%Y") + datetime.timedelta(days=row['DayNum']), axis=1)
+    df = df.drop('DayZero', 1)
+    return df
+
 
 
 
@@ -123,6 +131,7 @@ def create_master_train(all_detailed_results):
     loser_column_names = [clean_loser_column_names(col_name) for col_name in all_detailed_results.columns]
     losers.columns = loser_column_names
     losers['Result'] = 0.0
+    losers['score_diff'] = (-1.0 * losers['score_diff'])
 
     def translate_loc(t1_loc):
         if t1_loc=="H":
@@ -140,12 +149,16 @@ def create_master_train(all_detailed_results):
 
 
 
-
+# I don't think this is the approach I want to use to 
 
 def create_rolling_avg_feature(df, field_to_agg, num_games=5):
+
+    # Possible window types to look into
+    # https://docs.scipy.org/doc/scipy/reference/signal.html#window-functions
+
     """ Function to calculate rolling features """
     df = df.sort_values(['t1_TeamID', 'Season','DayNum']).reset_index()
-    col_name = field_to_agg + "_rolling_avg_" + str(num_games) + "gm_"
+    col_name = field_to_agg + "_rolling_avg_" + str(num_games) + "gm"
     df[col_name] = df.groupby(['Season', 't1_TeamID'])[[field_to_agg]].shift(1) \
         .rolling(window=num_games, min_periods=num_games).mean()
     return df
@@ -155,14 +168,36 @@ def create_rolling_avg_feature(df, field_to_agg, num_games=5):
 
 
 
+def calc_logloss(preds, actuals):
+    step1 = (actuals * np.log(preds)) + ((1-actuals)*(np.log(1-preds)))
+    return (-1/len(step1) * sum(step1))
 
 
 
 
 
 
-
-
+def add_in_massey_ordinal_field(df, massey_ranking_name, massey_ordinals_df):
+    """ Function to add in most recent massey ordinal rank for each team in train """
+    df = pd.merge_asof(left=df.sort_values('DayNum'), 
+                      right=massey_ordinals_df[massey_ordinals_df['SystemName']==massey_ranking_name].sort_values('DayNum'), 
+                      left_on=['DayNum'], right_on=['DayNum'], 
+                      left_by=['t1_TeamID', 'Season'],
+                      right_by=['TeamID', 'Season'],
+                      allow_exact_matches=False)
+    df.rename(columns={'OrdinalRank' : ("t1_" + massey_ranking_name + "_rnk")}, inplace=True)
+    df.drop(columns='SystemName', inplace=True)
+    df.drop(columns='TeamID', inplace=True)
+    df = pd.merge_asof(left=df.sort_values('DayNum'), 
+                      right=massey_ordinals_df[massey_ordinals_df['SystemName']==massey_ranking_name].sort_values('DayNum'), 
+                      left_on=['DayNum'], right_on=['DayNum'], 
+                      left_by=['t2_TeamID', 'Season'],
+                      right_by=['TeamID', 'Season'],
+                      allow_exact_matches=False)
+    df.rename(columns={'OrdinalRank' : ("t2_" + massey_ranking_name + "_rnk")}, inplace=True)
+    df.drop(columns='SystemName', inplace=True)
+    df.drop(columns='TeamID', inplace=True)
+    return df
 
 
 
