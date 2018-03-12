@@ -185,7 +185,8 @@ def add_in_massey_ordinal_field(df, massey_ranking_name, massey_ordinals_df):
                       left_by=['t1_TeamID', 'Season'],
                       right_by=['TeamID', 'Season'],
                       allow_exact_matches=False)
-    df.rename(columns={'OrdinalRank' : ("t1_" + massey_ranking_name + "_rnk")}, inplace=True)
+    t1_col_name = ("t1_" + massey_ranking_name + "_rnk")
+    df.rename(columns={'OrdinalRank' : t1_col_name}, inplace=True)
     df.drop(columns='SystemName', inplace=True)
     df.drop(columns='TeamID', inplace=True)
     df = pd.merge_asof(left=df.sort_values('DayNum'), 
@@ -194,9 +195,12 @@ def add_in_massey_ordinal_field(df, massey_ranking_name, massey_ordinals_df):
                       left_by=['t2_TeamID', 'Season'],
                       right_by=['TeamID', 'Season'],
                       allow_exact_matches=False)
-    df.rename(columns={'OrdinalRank' : ("t2_" + massey_ranking_name + "_rnk")}, inplace=True)
+    t2_col_name = ("t2_" + massey_ranking_name + "_rnk")
+    df.rename(columns={'OrdinalRank' : t2_col_name}, inplace=True)
     df.drop(columns='SystemName', inplace=True)
     df.drop(columns='TeamID', inplace=True)
+    diff_col_name = ("t1_" + massey_ranking_name + "_rnk_diff")
+    df[diff_col_name] = df[t1_col_name] - df[t2_col_name]
     return df
 
 
