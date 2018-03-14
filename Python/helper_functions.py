@@ -207,7 +207,11 @@ def add_in_massey_ordinal_field(df, massey_ranking_name, massey_ordinals_df):
 
 
 
-
+def calc_vegas_line_preds(row):
+    if row['vegas_line'] >= 0:
+        return abs(scipy.stats.norm(0,10.5).cdf(row['vegas_line']) - 1)
+    else:
+        return 1 - scipy.stats.norm(0,10.5).cdf(row['vegas_line'])
 
 
 
